@@ -9,8 +9,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SkillResponse {
-    private Long id;
-    private String name;
+public class UserSkillResponse {
+    private Long skillId;
+    private String skillName;
     private String category;
+    private String proficiencyLevel;
+    private String source;
 }

@@ -5,18 +5,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RoadmapResponse {
+public class RoadmapStepResponse {
     private Long id;
     private String title;
-    private String jobRole;
     private String description;
-    private Integer totalSteps;
-    private Integer completedSteps;
-    private List<RoadmapStepResponse> steps;
+    private Integer stepOrder;
+    private String resourceUrl;
+    private Integer estimatedDays;
+    private String status;           // user's progress: NOT_STARTED, IN_PROGRESS, COMPLETED
 }

@@ -1,5 +1,6 @@
-package com.careercompass.backend.auth.dto;
+package com.careercompass.backend.user.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,9 +10,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AuthResponse {
-    private String token;
+public class UpdateProfileRequest {
+
+    @NotBlank(message = "Name is required")
     private String name;
-    private String email;
+
     private String targetJobRole;
 }

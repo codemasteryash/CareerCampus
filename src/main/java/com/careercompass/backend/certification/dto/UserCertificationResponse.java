@@ -5,16 +5,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.time.LocalDate;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CertificationResponse {
+public class UserCertificationResponse {
     private Long id;
-    private String name;
+    private Long certificationId;
+    private String certificationName;
     private String provider;
     private String url;
-    private List<String> relevantSkills;
+    private String status;
+    private LocalDate completedAt;
 }

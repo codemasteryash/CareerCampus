@@ -1,20 +1,17 @@
 package com.careercompass.backend.certification.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CertificationResponse {
-    private Long id;
-    private String name;
-    private String provider;
-    private String url;
-    private List<String> relevantSkills;
+public class EnrollCertificationRequest {
+
+    @NotNull(message = "Certification ID is required")
+    private Long certificationId;
 }
