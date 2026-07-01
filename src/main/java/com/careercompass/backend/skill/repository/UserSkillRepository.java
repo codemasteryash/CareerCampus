@@ -15,5 +15,7 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
 
     Optional<UserSkill> findByUserIdAndSkillId(Long userId, Long skillId);
 
+
+
     boolean existsByUserIdAndSkillId(Long userId, Long skillId);
 }
