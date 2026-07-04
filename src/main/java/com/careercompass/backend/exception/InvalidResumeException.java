@@ -1,4 +1,8 @@
 package com.careercompass.backend.exception;
 
-public class InvalidResumeException {
+public class InvalidResumeException extends RuntimeException {
+
+    public InvalidResumeException(String message) {
+        super(message);
+    }
 }
