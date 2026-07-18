@@ -1,6 +1,6 @@
 package com.careercompass.backend.certification.controller;
 
-import com.careercompass.backend.certification.dto.CertificationResponse;
+import com.careercompass.backend.certification.dto.AiCertificationRecommendation;
 import com.careercompass.backend.certification.dto.EnrollCertificationRequest;
 import com.careercompass.backend.certification.dto.UpdateCertificationStatusRequest;
 import com.careercompass.backend.certification.dto.UserCertificationResponse;
@@ -27,21 +27,16 @@ public class CertificationController {
 
     private final CertificationService certificationService;
 
-    @GetMapping
-    public ResponseEntity<List<CertificationResponse>> getAllCertifications() {
+    @GetMapping("/recommendations")
+    public ResponseEntity<List<AiCertificationRecommendation>>
+    getRecommendations() {
         return ResponseEntity.ok(
-                certificationService.getAllCertifications());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<CertificationResponse> getCertificationById(
-            @PathVariable Long id) {
-        return ResponseEntity.ok(
-                certificationService.getCertificationById(id));
+                certificationService.getRecommendations());
     }
 
     @GetMapping("/me")
-    public ResponseEntity<List<UserCertificationResponse>> getMyCertifications() {
+    public ResponseEntity<List<UserCertificationResponse>>
+    getMyCertifications() {
         return ResponseEntity.ok(
                 certificationService.getMyCertifications());
     }

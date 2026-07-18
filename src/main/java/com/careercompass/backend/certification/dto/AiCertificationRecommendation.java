@@ -5,16 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CertificationResponse {
-    private Long id;
+public class AiCertificationRecommendation {
     private String name;
     private String provider;
     private String url;
-    private List<String> relevantSkills;
+    private String reason;
+    private String difficulty;
 }

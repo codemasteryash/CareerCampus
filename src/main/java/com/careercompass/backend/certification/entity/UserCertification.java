@@ -1,6 +1,5 @@
 package com.careercompass.backend.certification.entity;
 
-
 import com.careercompass.backend.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,14 +7,14 @@ import lombok.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "user_certifications",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "certification_id"}))
+@Table(name = "user_certifications")
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class UserCertification {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,12 +23,16 @@ public class UserCertification {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "certification_id", nullable = false)
-    private Certification certification;
+    @Column(nullable = false)
+    private String certificationName;
+
+    @Column(nullable = false)
+    private String provider;
+
+    private String url;
 
     private LocalDate completedAt;
 
     @Column(nullable = false)
-    private String status;
+    private String status; // IN_PROGRESS, COMPLETED
 }

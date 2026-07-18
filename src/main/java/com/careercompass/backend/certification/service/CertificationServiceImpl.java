@@ -1,47 +1,85 @@
 package com.careercompass.backend.certification.service;
 
-import com.careercompass.backend.certification.dto.CertificationResponse;
+import com.careercompass.backend.ai.AiClient;
+import com.careercompass.backend.certification.dto.AiCertificationRecommendation;
 import com.careercompass.backend.certification.dto.EnrollCertificationRequest;
 import com.careercompass.backend.certification.dto.UpdateCertificationStatusRequest;
 import com.careercompass.backend.certification.dto.UserCertificationResponse;
-import com.careercompass.backend.certification.entity.Certification;
 import com.careercompass.backend.certification.entity.UserCertification;
-import com.careercompass.backend.certification.repository.CertificationRepository;
 import com.careercompass.backend.certification.repository.UserCertificationRepository;
 import com.careercompass.backend.exception.ResourceNotFoundException;
 import com.careercompass.backend.security.UserPrincipal;
+import com.careercompass.backend.skill.entity.UserSkill;
+import com.careercompass.backend.skill.repository.UserSkillRepository;
 import com.careercompass.backend.user.entity.User;
 import com.careercompass.backend.user.repository.UserRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class CertificationServiceImpl implements CertificationService {
 
-    private final CertificationRepository certificationRepository;
     private final UserCertificationRepository userCertificationRepository;
     private final UserRepository userRepository;
+    private final UserSkillRepository userSkillRepository;
+    private final AiClient aiClient;
+    private final ObjectMapper objectMapper;
 
     @Override
-    public List<CertificationResponse> getAllCertifications() {
-        return certificationRepository.findAll()
+    public List<AiCertificationRecommendation> getRecommendations() {
+        Long userId = getCurrentUserId();
+
+        List<String> userSkills = userSkillRepository
+                .findByUserId(userId)
                 .stream()
-                .map(this::mapToCertificationResponse)
+                .map(us -> us.getSkill().getName())
                 .toList();
-    }
 
-    @Override
-    public CertificationResponse getCertificationById(Long id) {
-        Certification certification = certificationRepository.findById(id)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Certification not found with id: " + id));
-        return mapToCertificationResponse(certification);
+                        "User not found."));
+
+        String targetRole = user.getTargetJobRole() != null
+                ? user.getTargetJobRole()
+                : "Software Developer";
+
+        String prompt = """
+                You are a career advisor. Recommend 5 certifications
+                for someone targeting the role: %s
+                
+                Their current skills are: %s
+                
+                Return ONLY a valid JSON array with no markdown,
+                no backticks, no explanation. Exactly this format:
+                [
+                  {
+                    "name": "certification name",
+                    "provider": "provider name",
+                    "url": "official certification url",
+                    "reason": "one sentence why this helps",
+                    "difficulty": "BEGINNER or INTERMEDIATE or ADVANCED"
+                  }
+                ]
+                """.formatted(targetRole, String.join(", ", userSkills));
+
+        String aiResponse = aiClient.chat(prompt);
+        try {
+            return objectMapper.readValue(
+                    aiResponse,
+                    new TypeReference<List<AiCertificationRecommendation>>() {});
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Failed to parse AI certification recommendations: "
+                            + e.getMessage());
+        }
     }
 
     @Override
@@ -49,7 +87,7 @@ public class CertificationServiceImpl implements CertificationService {
         Long userId = getCurrentUserId();
         return userCertificationRepository.findByUserId(userId)
                 .stream()
-                .map(this::mapToUserCertificationResponse)
+                .map(this::mapToResponse)
                 .toList();
     }
 
@@ -58,32 +96,32 @@ public class CertificationServiceImpl implements CertificationService {
             EnrollCertificationRequest request) {
 
         Long userId = getCurrentUserId();
-        if (userCertificationRepository.existsByUserIdAndCertificationId(
-                userId, request.getCertificationId())) {
-            throw new IllegalArgumentException(
-                    "You are already enrolled in this certification.");
-        }
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "User not found with id: " + userId));
+                        "User not found."));
 
-        Certification certification = certificationRepository
-                .findById(request.getCertificationId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Certification not found with id: "
-                                + request.getCertificationId()));
+        boolean alreadyEnrolled = userCertificationRepository
+                .findByUserId(userId)
+                .stream()
+                .anyMatch(uc -> uc.getCertificationName()
+                        .equalsIgnoreCase(request.getCertificationName()));
+
+        if (alreadyEnrolled) {
+            throw new IllegalArgumentException(
+                    "You are already tracking this certification.");
+        }
 
         UserCertification userCertification = UserCertification.builder()
                 .user(user)
-                .certification(certification)
+                .certificationName(request.getCertificationName())
+                .provider(request.getProvider())
+                .url(request.getUrl())
                 .status("IN_PROGRESS")
                 .completedAt(null)
                 .build();
 
-        UserCertification saved =
-                userCertificationRepository.save(userCertification);
-        return mapToUserCertificationResponse(saved);
+        return mapToResponse(
+                userCertificationRepository.save(userCertification));
     }
 
     @Override
@@ -92,11 +130,13 @@ public class CertificationServiceImpl implements CertificationService {
             UpdateCertificationStatusRequest request) {
 
         Long userId = getCurrentUserId();
-        UserCertification userCertification =
-                userCertificationRepository.findById(userCertificationId)
-                        .orElseThrow(() -> new ResourceNotFoundException(
-                                "Certification enrollment not found."));
-        if (!userCertification.getUser().getId().equals(userId)) {
+
+        UserCertification uc = userCertificationRepository
+                .findById(userCertificationId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Certification enrollment not found."));
+
+        if (!uc.getUser().getId().equals(userId)) {
             throw new ResourceNotFoundException(
                     "Certification enrollment not found.");
         }
@@ -107,35 +147,34 @@ public class CertificationServiceImpl implements CertificationService {
                     "Status must be IN_PROGRESS or COMPLETED.");
         }
 
-        userCertification.setStatus(request.getStatus());
+        uc.setStatus(request.getStatus());
+
         if ("COMPLETED".equals(request.getStatus())) {
-            userCertification.setCompletedAt(
-                    request.getCompletedAt() != null
-                            ? request.getCompletedAt()
-                            : java.time.LocalDate.now());
+            uc.setCompletedAt(request.getCompletedAt() != null
+                    ? request.getCompletedAt()
+                    : LocalDate.now());
         } else {
-            userCertification.setCompletedAt(null);
+            uc.setCompletedAt(null);
         }
 
-        UserCertification updated =
-                userCertificationRepository.save(userCertification);
-        return mapToUserCertificationResponse(updated);
+        return mapToResponse(userCertificationRepository.save(uc));
     }
 
     @Override
     public void removeCertification(Long userCertificationId) {
         Long userId = getCurrentUserId();
 
-        UserCertification userCertification =
-                userCertificationRepository.findById(userCertificationId)
-                        .orElseThrow(() -> new ResourceNotFoundException(
-                                "Certification enrollment not found."));
-        if (!userCertification.getUser().getId().equals(userId)) {
+        UserCertification uc = userCertificationRepository
+                .findById(userCertificationId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Certification enrollment not found."));
+
+        if (!uc.getUser().getId().equals(userId)) {
             throw new ResourceNotFoundException(
                     "Certification enrollment not found.");
         }
 
-        userCertificationRepository.delete(userCertification);
+        userCertificationRepository.delete(uc);
     }
 
     private Long getCurrentUserId() {
@@ -146,32 +185,12 @@ public class CertificationServiceImpl implements CertificationService {
         return principal.getId();
     }
 
-    private CertificationResponse mapToCertificationResponse(
-            Certification cert) {
-        List<String> skills = cert.getRelevantSkills() != null
-                ? Arrays.stream(cert.getRelevantSkills().split(","))
-                .map(String::trim)
-                .filter(s -> !s.isBlank())
-                .toList()
-                : List.of();
-
-        return CertificationResponse.builder()
-                .id(cert.getId())
-                .name(cert.getName())
-                .provider(cert.getProvider())
-                .url(cert.getUrl())
-                .relevantSkills(skills)
-                .build();
-    }
-
-    private UserCertificationResponse mapToUserCertificationResponse(
-            UserCertification uc) {
+    private UserCertificationResponse mapToResponse(UserCertification uc) {
         return UserCertificationResponse.builder()
                 .id(uc.getId())
-                .certificationId(uc.getCertification().getId())
-                .certificationName(uc.getCertification().getName())
-                .provider(uc.getCertification().getProvider())
-                .url(uc.getCertification().getUrl())
+                .certificationName(uc.getCertificationName())
+                .provider(uc.getProvider())
+                .url(uc.getUrl())
                 .status(uc.getStatus())
                 .completedAt(uc.getCompletedAt())
                 .build();

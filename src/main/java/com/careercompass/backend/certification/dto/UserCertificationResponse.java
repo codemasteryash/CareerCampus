@@ -13,7 +13,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class UserCertificationResponse {
     private Long id;
-    private Long certificationId;
     private String certificationName;
     private String provider;
     private String url;
