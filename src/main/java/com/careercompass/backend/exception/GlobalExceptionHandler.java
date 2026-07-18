@@ -56,4 +56,11 @@ public class GlobalExceptionHandler {
                 .body(new MessageResponse(
                         "Something went wrong. Please try again later."));
     }
+    @ExceptionHandler(InvalidResumeException.class)
+    public ResponseEntity<MessageResponse> handleInvalidResume(
+            InvalidResumeException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new MessageResponse(ex.getMessage()));
+    }
 }
