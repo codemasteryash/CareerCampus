@@ -1,4 +1,10 @@
 package com.careercompass.backend.projectrecommendation.service;
 
-public class ProjectRecommendationService {
+import com.careercompass.backend.projectrecommendation.dto.ProjectResponse;
+
+import java.util.List;
+
+public interface ProjectRecommendationService {
+
+    List<ProjectResponse> getRecommendations();
 }

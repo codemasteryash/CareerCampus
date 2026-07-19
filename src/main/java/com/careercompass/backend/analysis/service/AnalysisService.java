@@ -1,4 +1,8 @@
 package com.careercompass.backend.analysis.service;
 
-public class AnalysisService {
+import com.careercompass.backend.analysis.dto.AnalysisResponse;
+
+public interface AnalysisService {
+
+    AnalysisResponse getFullAnalysis();
 }

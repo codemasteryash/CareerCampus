@@ -12,11 +12,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProjectResponse {
-    private Long id;
     private String title;
     private String description;
     private List<String> skillsCovered;
     private String difficulty;
     private Integer estimatedHours;
     private String relevantJobRole;
+    private String reason;
 }
