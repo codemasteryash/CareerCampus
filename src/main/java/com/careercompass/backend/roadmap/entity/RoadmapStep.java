@@ -1,11 +1,10 @@
 package com.careercompass.backend.roadmap.entity;
+import com.careercompass.backend.roadmap.entity.Roadmap;
+import lombok.Setter;
+
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "roadmap_steps")
@@ -26,6 +25,7 @@ public class RoadmapStep {
     @Column(nullable = false)
     private String title;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)

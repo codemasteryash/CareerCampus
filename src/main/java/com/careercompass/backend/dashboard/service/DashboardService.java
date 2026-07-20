@@ -1,4 +1,8 @@
 package com.careercompass.backend.dashboard.service;
 
-public class DashboardService {
+import com.careercompass.backend.dashboard.dto.DashboardResponse;
+
+public interface DashboardService {
+
+    DashboardResponse getDashboard();
 }

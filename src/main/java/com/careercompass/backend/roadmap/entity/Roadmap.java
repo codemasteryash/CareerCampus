@@ -24,6 +24,7 @@ public class Roadmap {
     @Column(nullable = false)
     private String jobRole;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)
