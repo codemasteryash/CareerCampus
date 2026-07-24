@@ -69,9 +69,16 @@ public class ProjectRecommendationServiceImpl implements ProjectRecommendationSe
                 """.formatted(targetRole, String.join(", ", userSkills),
                 targetRole);
 
-        String aiResponse = aiClient.chat(prompt);
+//        String aiResponse = aiClient.chat(prompt);
 
         try {
+            String aiResponse = aiClient.chat(prompt);
+            String cleaned = aiResponse.trim()
+                    .replaceAll("```json\\s*", "")
+                    .replaceAll("```\\s*", "")
+                    .trim();
+            int start = cleaned.indexOf('[');
+            if (start > 0) cleaned = cleaned.substring(start);
             return objectMapper.readValue(
                     aiResponse,
                     new TypeReference<List<ProjectResponse>>() {});

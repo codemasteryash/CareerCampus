@@ -38,4 +38,17 @@ public class GroqClient implements AiClient {
                 .call()
                 .content();
     }
+    public static String cleanJsonResponse(String raw) {
+        if (raw == null) return "[]";
+        String cleaned = raw.trim()
+                .replaceAll("```json\\s*", "")
+                .replaceAll("```\\s*", "")
+                .trim();
+        int arrayStart = cleaned.indexOf('[');
+        int objStart = cleaned.indexOf('{');
+        if (arrayStart == -1 && objStart == -1) return cleaned;
+        if (arrayStart == -1) return cleaned.substring(objStart);
+        if (objStart == -1) return cleaned.substring(arrayStart);
+        return cleaned.substring(Math.min(arrayStart, objStart));
+    }
 }

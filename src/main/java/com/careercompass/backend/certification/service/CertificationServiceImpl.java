@@ -16,6 +16,7 @@ import com.careercompass.backend.user.repository.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CertificationServiceImpl implements CertificationService {
 
     private final UserCertificationRepository userCertificationRepository;
@@ -44,41 +46,44 @@ public class CertificationServiceImpl implements CertificationService {
                 .toList();
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "User not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
         String targetRole = user.getTargetJobRole() != null
-                ? user.getTargetJobRole()
-                : "Software Developer";
+                ? user.getTargetJobRole() : "Software Developer";
 
         String prompt = """
-                You are a career advisor. Recommend 5 certifications
-                for someone targeting the role: %s
-                
-                Their current skills are: %s
-                
-                Return ONLY a valid JSON array with no markdown,
-                no backticks, no explanation. Exactly this format:
-                [
-                  {
-                    "name": "certification name",
-                    "provider": "provider name",
-                    "url": "official certification url",
-                    "reason": "one sentence why this helps",
-                    "difficulty": "BEGINNER or INTERMEDIATE or ADVANCED"
-                  }
-                ]
-                """.formatted(targetRole, String.join(", ", userSkills));
+            You are a career advisor. Recommend 5 certifications
+            for someone targeting the role: %s
+            
+            Their current skills are: %s
+            
+            Return ONLY a valid JSON array with no markdown,
+            no backticks, no explanation. Exactly this format:
+            [
+              {
+                "name": "certification name",
+                "provider": "provider name",
+                "url": "official certification url",
+                "reason": "one sentence why this helps",
+                "difficulty": "BEGINNER or INTERMEDIATE or ADVANCED"
+              }
+            ]
+            """.formatted(targetRole, String.join(", ", userSkills));
 
-        String aiResponse = aiClient.chat(prompt);
         try {
-            return objectMapper.readValue(
-                    aiResponse,
+            String aiResponse = aiClient.chat(prompt);
+            String cleaned = aiResponse.trim()
+                    .replaceAll("```json\\s*", "")
+                    .replaceAll("```\\s*", "")
+                    .trim();
+            int start = cleaned.indexOf('[');
+            if (start > 0) cleaned = cleaned.substring(start);
+            return objectMapper.readValue(cleaned,
                     new TypeReference<List<AiCertificationRecommendation>>() {});
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "Failed to parse AI certification recommendations: "
-                            + e.getMessage());
+            log.error("Failed to parse certification recommendations: {}", e.getMessage());
+            log.error("Raw AI response parsing failed", e);
+            throw new RuntimeException("Failed to parse AI certification recommendations: " + e.getMessage());
         }
     }
 

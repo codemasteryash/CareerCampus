@@ -2,6 +2,7 @@ package com.careercompass.backend.roadmap.service;
 
 import com.careercompass.backend.ai.AiClient;
 import com.careercompass.backend.exception.ResourceNotFoundException;
+import com.careercompass.backend.notification.service.NotificationService;
 import com.careercompass.backend.roadmap.dto.ProgressResponse;
 import com.careercompass.backend.roadmap.dto.RoadmapResponse;
 import com.careercompass.backend.roadmap.dto.RoadmapStepResponse;
@@ -42,6 +43,7 @@ public class RoadmapServiceImpl implements RoadmapService {
     private final UserRepository userRepository;
     private final AiClient aiClient;
     private final ObjectMapper objectMapper;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -152,6 +154,16 @@ public class RoadmapServiceImpl implements RoadmapService {
 
         progressRepository.save(progress);
 
+        if ("COMPLETED".equals(request.getStatus())) {
+            User fullUser = userRepository.findById(userId)
+                    .orElseThrow();
+            notificationService.sendRoadmapStepCompletedEmail(
+                    fullUser.getEmail(),
+                    fullUser.getName(),
+                    step.getTitle(),
+                    step.getRoadmap().getTitle());
+        }
+
         return ProgressResponse.builder()
                 .roadmapId(step.getRoadmap().getId())
                 .roadmapTitle(step.getRoadmap().getTitle())
@@ -191,9 +203,16 @@ public class RoadmapServiceImpl implements RoadmapService {
                 advanced topics last.
                 """.formatted(targetRole);
 
-        String aiResponse = aiClient.chat(prompt);
+//        String aiResponse = aiClient.chat(prompt);
 
         try {
+            String aiResponse = aiClient.chat(prompt);
+            String cleaned = aiResponse.trim()
+                    .replaceAll("```json\\s*", "")
+                    .replaceAll("```\\s*", "")
+                    .trim();
+            int start = cleaned.indexOf('{');
+            if (start > 0) cleaned = cleaned.substring(start);
             AiRoadmapResponse aiRoadmap = objectMapper.readValue(
                     aiResponse, AiRoadmapResponse.class);
 

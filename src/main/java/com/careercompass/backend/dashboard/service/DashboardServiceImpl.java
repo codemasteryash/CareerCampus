@@ -14,6 +14,7 @@ import com.careercompass.backend.skill.repository.UserSkillRepository;
 import com.careercompass.backend.user.entity.User;
 import com.careercompass.backend.user.repository.UserRepository;
 import com.careercompass.backend.util.ReadinessCalculatorUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -171,11 +172,15 @@ public class DashboardServiceImpl implements DashboardService {
 
         try {
             String aiResponse = aiClient.chat(prompt);
-            // Parse JSON array of strings
-            com.fasterxml.jackson.databind.ObjectMapper mapper =
-                    new com.fasterxml.jackson.databind.ObjectMapper();
+            String cleaned = aiResponse.trim()
+                    .replaceAll("```json\\s*", "")
+                    .replaceAll("```\\s*", "")
+                    .trim();
+            int start = cleaned.indexOf('[');
+            if (start > 0) cleaned = cleaned.substring(start);
+            ObjectMapper mapper = new ObjectMapper();
             return mapper.readValue(
-                    aiResponse,
+                    cleaned,
                     new TypeReference<List<String>>() {}
             );
         } catch (Exception e) {

@@ -4,6 +4,7 @@ import com.careercompass.backend.auth.dto.AuthResponse;
 import com.careercompass.backend.auth.dto.LoginRequest;
 import com.careercompass.backend.auth.dto.RegisterRequest;
 import com.careercompass.backend.exception.UserAlreadyExistsException;
+import com.careercompass.backend.notification.service.NotificationService;
 import com.careercompass.backend.security.JwtService;
 import com.careercompass.backend.security.UserPrincipal;
 import com.careercompass.backend.user.entity.User;
@@ -22,6 +23,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final NotificationService notificationService;
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -38,6 +40,10 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         UserPrincipal userPrincipal = new UserPrincipal(savedUser);
         String token = jwtService.generateToken(userPrincipal);
+
+        notificationService.sendWelcomeEmail(
+                savedUser.getEmail(),
+                savedUser.getName());
 
         return AuthResponse.builder()
                 .token(token)
