@@ -203,7 +203,6 @@ public class RoadmapServiceImpl implements RoadmapService {
                 advanced topics last.
                 """.formatted(targetRole);
 
-//        String aiResponse = aiClient.chat(prompt);
 
         try {
             String aiResponse = aiClient.chat(prompt);

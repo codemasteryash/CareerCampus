@@ -69,7 +69,7 @@ public class ProjectRecommendationServiceImpl implements ProjectRecommendationSe
                 """.formatted(targetRole, String.join(", ", userSkills),
                 targetRole);
 
-//        String aiResponse = aiClient.chat(prompt);
+
 
         try {
             String aiResponse = aiClient.chat(prompt);
