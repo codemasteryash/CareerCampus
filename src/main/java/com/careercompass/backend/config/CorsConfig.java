@@ -19,7 +19,7 @@ public class CorsConfig {
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "http://localhost:4173",
-                "https://careercompass-frontend.vercel.app",  // your Vercel URL (update after deploy)
+                "https://career-compass-frontend-c3mluusdb-yash-guptas-projects-cfae74bc.vercel.app/",
                 "https://*.vercel.app"
         ));
 
