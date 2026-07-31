@@ -85,7 +85,7 @@ public class NotificationServiceImpl implements NotificationService {
             resend.emails().send(params);
             log.info("Email sent successfully via Resend to: {}", toEmail);
 
-        } catch (ResendException e) {
+        } catch (Exception e) {
             log.error("Failed to send email via Resend to {}: {}", toEmail, e.getMessage());
         }
     }
