@@ -6,17 +6,9 @@ RUN mvn dependency:go-offline -B
 COPY src ./src
 RUN mvn clean package -DskipTests
 
+
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-
-ENTRYPOINT ["java",
-  "-Xms128m",
-  "-Xmx384m",
-  "-XX:+UseSerialGC",
-  "-XX:TieredStopAtLevel=1",
-  "-Dspring.profiles.active=prod",
-  "-jar",
-  "app.jar"
-]
+ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
