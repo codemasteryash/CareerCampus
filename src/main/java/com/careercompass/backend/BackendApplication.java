@@ -5,10 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-@SpringBootApplication(exclude = {
-		org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfiguration.class,
-		org.springframework.boot.actuate.autoconfigure.metrics.export.simple.SimpleMetricsExportAutoConfiguration.class,
-})
+@SpringBootApplication
 @EnableJpaAuditing
 @EnableAsync
 public class BackendApplication {
