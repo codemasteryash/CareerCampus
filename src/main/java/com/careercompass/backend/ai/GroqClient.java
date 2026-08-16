@@ -83,7 +83,7 @@ public class GroqClient implements AiClient {
             ChatClient.Builder chatClientBuilder,
             ObjectMapper objectMapper,
             @Value("${spring.ai.openai.base-url}") String baseUrl,
-            @Value("${spring.ai.openai.chat.options.model:llama-3.3-70b-versatile}") String model,
+            @Value("${spring.ai.openai.chat.options.model:openai/gpt-oss-120b}") String model,
             @Value("${groq.api.key.fallback:}") String fallbackKey
     ) {
         this.primaryClient = chatClientBuilder.build();
